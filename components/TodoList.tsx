@@ -2,8 +2,13 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
-type Todos = Database['public']['Tables']['todos']['Row']
+// Define the User type for the users fetched from Supabase
+type User = {
+  id: string
+  email: string
+}
 
+type Todos = Database['public']['Tables']['todos']['Row']
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
@@ -12,7 +17,7 @@ export default function TodoList({ session }: { session: Session }) {
   const [assignedTo, setAssignedTo] = useState<string>('') // New state for assigned user
   const [assignedDate, setAssignedDate] = useState<string>('') // New state for assigned date
   const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<Users[]>([]) // List of users for the select dropdown
+  const [users, setUsers] = useState<User[]>([]) // List of users for the select dropdown
 
   const user = session.user
 
@@ -193,4 +198,3 @@ const Alert = ({ text }: { text: string }) => (
     <div className="text-sm leading-5 text-red-700">{text}</div>
   </div>
 )
-
