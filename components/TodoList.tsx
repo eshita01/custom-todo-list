@@ -3,12 +3,16 @@ import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
 type Todos = Database['public']['Tables']['todos']['Row']
+type Users = Database['public']['Tables']['users']['Row']
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
+  const [assignedTo, setAssignedTo] = useState<string>('') // New state for assigned user
+  const [assignedDate, setAssignedDate] = useState<string>('') // New state for assigned date
   const [errorText, setErrorText] = useState('')
+  const [users, setUsers] = useState<Users[]>([]) // List of users for the select dropdown
 
   const user = session.user
 
@@ -23,15 +27,30 @@ export default function TodoList({ session }: { session: Session }) {
       else setTodos(todos)
     }
 
+    const fetchUsers = async () => {
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+
+      if (error) console.log('error', error)
+      else setUsers(users)
+    }
+
     fetchTodos()
+    fetchUsers()
   }, [supabase])
 
   const addTodo = async (taskText: string) => {
     let task = taskText.trim()
-    if (task.length) {
+    if (task.length && assignedTo && assignedDate) {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id })
+        .insert({ 
+          task, 
+          user_id: user.id, 
+          assigned_to: assignedTo, 
+          assigned_date: assignedDate 
+        })
         .select()
         .single()
 
@@ -40,7 +59,11 @@ export default function TodoList({ session }: { session: Session }) {
       } else {
         setTodos([...todos, todo])
         setNewTaskText('')
+        setAssignedTo('')
+        setAssignedDate('')
       }
+    } else {
+      setErrorText('Please fill in all fields')
     }
   }
 
@@ -72,6 +95,24 @@ export default function TodoList({ session }: { session: Session }) {
             setErrorText('')
             setNewTaskText(e.target.value)
           }}
+        />
+        <select
+          className="rounded w-full p-2"
+          value={assignedTo}
+          onChange={(e) => setAssignedTo(e.target.value)}
+        >
+          <option value="">Assign To</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.email}
+            </option>
+          ))}
+        </select>
+        <input
+          className="rounded w-full p-2"
+          type="date"
+          value={assignedDate}
+          onChange={(e) => setAssignedDate(e.target.value)}
         />
         <button className="btn-black" type="submit">
           Add
@@ -114,6 +155,9 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
+          <div className="text-sm text-gray-600 ml-2">
+            Assigned to: {todo.assigned_to || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
+          </div>
         </div>
         <div>
           <input
@@ -149,3 +193,4 @@ const Alert = ({ text }: { text: string }) => (
     <div className="text-sm leading-5 text-red-700">{text}</div>
   </div>
 )
+
