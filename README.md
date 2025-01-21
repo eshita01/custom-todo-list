@@ -1,5 +1,5 @@
 # Todo example using Supabase
-
+Version 2.1- Adding shared To Do List functionality
 - Frontend:
   - [Next.js](https://github.com/vercel/next.js) - a React framework for production.
   - [Tailwind](https://tailwindcss.com/) for styling and layout.
