@@ -2,13 +2,8 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
-// Define the User type for the users fetched from Supabase
-type User = {
-  id: string
-  email: string
-}
-
 type Todos = Database['public']['Tables']['todos']['Row']
+type Users = { id: string; email: string }  // Define the User type explicitly
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
@@ -17,7 +12,7 @@ export default function TodoList({ session }: { session: Session }) {
   const [assignedTo, setAssignedTo] = useState<string>('') // New state for assigned user
   const [assignedDate, setAssignedDate] = useState<string>('') // New state for assigned date
   const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<User[]>([]) // List of users for the select dropdown
+  const [users, setUsers] = useState<Users[]>([]) // List of users for the select dropdown
 
   const user = session.user
 
@@ -38,7 +33,7 @@ export default function TodoList({ session }: { session: Session }) {
         .select('*')
 
       if (error) console.log('error', error)
-      else setUsers(users)
+      else setUsers(users as Users[])  // Explicitly cast the data to Users[]
     }
 
     fetchTodos()
