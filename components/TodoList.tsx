@@ -9,7 +9,6 @@ type Todos = {
   is_complete: boolean
   assigned_date: string | null
   assigned_to: { id: string; email: string } | null
-  assigned_to_email?: string
 }
 
 type Users = { id: string; email: string }
@@ -29,7 +28,7 @@ export default function TodoList({ session }: { session: Session }) {
     const fetchTodos = async () => {
       const { data: todos, error } = await supabase
         .from('todos')
-        .select('id, task, user_id, is_complete, assigned_date, assigned_to!inner (id, email)')
+        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
         .order('id', { ascending: true })
 
       if (error) {
@@ -37,14 +36,14 @@ export default function TodoList({ session }: { session: Session }) {
       } else {
         const formattedTodos = todos.map((todo) => ({
           ...todo,
-          assigned_to_email: todo.assigned_to?.email || 'N/A',
+          assigned_to: todo.assigned_to as { id: string; email: string } | null, // Ensure correct type
         }))
-        setTodos(formattedTodos as Todos[])
+        setTodos(formattedTodos)
       }
     }
 
     const fetchUsers = async () => {
-      const { data: users, error } = await supabase.from('users').select('*')
+      const { data: users, error } = await supabase.from('users').select('id, email')
       if (error) console.log('error', error)
       else setUsers(users as Users[])
     }
@@ -64,13 +63,19 @@ export default function TodoList({ session }: { session: Session }) {
           assigned_to: assignedTo,
           assigned_date: assignedDate,
         })
-        .select('id, task, user_id, is_complete, assigned_date, assigned_to!inner (id, email)')
+        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
         .single()
 
       if (error) {
         setErrorText(error.message)
       } else {
-        setTodos([...todos, { ...todo, assigned_to_email: todo.assigned_to?.email || 'N/A' }])
+        setTodos([
+          ...todos,
+          {
+            ...todo,
+            assigned_to: todo.assigned_to as { id: string; email: string } | null, // Ensure correct type
+          },
+        ])
         setNewTaskText('')
         setAssignedTo('')
         setAssignedDate('')
@@ -169,7 +174,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
           <div className="text-sm text-gray-600 ml-2">
-            Assigned to: {todo.assigned_to_email} | Due Date: {todo.assigned_date || 'N/A'}
+            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
           </div>
         </div>
         <div>
