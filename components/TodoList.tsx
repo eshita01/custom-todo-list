@@ -27,23 +27,28 @@ export default function TodoList({ session }: { session: Session }) {
 
   useEffect(() => {
     const fetchTodos = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select(`
-          id,
-          user_id,
-          task,
-          is_complete,
-          inserted_at,
-          due_date,
-          assigned_to (id, email)
-        `)
-        .order('id', { ascending: true })
+  const { data: todos, error } = await supabase
+    .from('todos')
+    .select(`
+      id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
+      assigned_to (id, email)
+    `)
+    .order('id', { ascending: true })
 
-      if (error) {
-        console.error('Error fetching todos:', error)
-        return
-      }
+  if (error) {
+    console.error('Error fetching todos:', error)
+    return
+  }
+
+  // Ensure default values for nullable fields
+  setTodos(
+    todos.map((todo) => ({
+      ...todo,
+      task: todo.task || 'Untitled',
+      is_complete: todo.is_complete || false,
+    }))
+  )
+}
 
       const formattedTodos = todos.map((todo) => ({
         ...todo,
@@ -63,7 +68,7 @@ export default function TodoList({ session }: { session: Session }) {
     fetchUsers()
   }, [supabase])
 
- const addTodo = async (taskText: string) => {
+const addTodo = async (taskText: string) => {
   const task = taskText.trim()
   if (task.length && assignedTo && assignedDate) {
     const { data: todo, error } = await supabase
@@ -74,24 +79,29 @@ export default function TodoList({ session }: { session: Session }) {
         assigned_to: assignedTo,
         assigned_date: assignedDate,
       })
-      .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
+      .select(`
+        id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
+        assigned_to (id, email)
+      `)
       .single()
 
     if (error) {
       setErrorText(error.message)
-    } else {
-      setTodos((prev) => [
-        ...prev,
-        {
-          ...todo,
-          assigned_to: todo.assigned_to || null,
-          task: todo.task || '', // Default empty string if task is null
-        },
-      ])
-      setNewTaskText('')
-      setAssignedTo('')
-      setAssignedDate('')
+      return
     }
+
+    // Add the new todo with default values for nullable fields
+    setTodos((prev) => [
+      ...prev,
+      {
+        ...todo,
+        task: todo.task || 'Untitled',
+        is_complete: todo.is_complete || false,
+      },
+    ])
+    setNewTaskText('')
+    setAssignedTo('')
+    setAssignedDate('')
   } else {
     setErrorText('Please fill in all fields')
   }
@@ -162,7 +172,7 @@ export default function TodoList({ session }: { session: Session }) {
 
 const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
   const supabase = useSupabaseClient<Database>()
-  const [isCompleted, setIsCompleted] = useState(todo.is_complete)
+  const [isCompleted, setIsCompleted] = useState(todo.is_complete || false)
 
   const toggle = async () => {
     try {
@@ -173,7 +183,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         .select()
         .single()
 
-      if (data) setIsCompleted(data.is_complete)
+      if (data) setIsCompleted(data.is_complete || false)
     } catch (error) {
       console.error('Error toggling todo:', error)
     }
@@ -183,9 +193,9 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
-          <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
+          <div className="text-sm leading-5 font-medium truncate">{todo.task || 'Untitled'}</div>
           <div className="text-sm text-gray-600 ml-2">
-            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.due_date || 'N/A'}
+            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
           </div>
         </div>
         <div>
@@ -193,7 +203,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
             className="cursor-pointer"
             onChange={toggle}
             type="checkbox"
-            checked={isCompleted || false}
+            checked={isCompleted}
           />
         </div>
         <button
