@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Write your own custom component styles here */
+/* Custom Button Styles */
 .btn-black {
   @apply border border-black bg-black text-white font-bold py-2 px-4 rounded text-center;
 }
@@ -16,15 +16,65 @@
   @apply transition duration-150 bg-black text-white;
 }
 
+/* Task Filters */
+.filter-container {
+  @apply flex gap-4 justify-center my-4;
+}
+
+.filter-button {
+  @apply border border-gray-300 bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded cursor-pointer;
+}
+.filter-button:hover {
+  @apply bg-gray-200;
+}
+.filter-button.active {
+  @apply bg-gray-800 text-white border-gray-800;
+}
+
+/* Notifications */
+.notification-container {
+  @apply bg-yellow-50 border border-yellow-300 text-yellow-900 p-4 rounded mb-4;
+}
+.notification-item {
+  @apply p-2 border border-yellow-400 bg-yellow-100 rounded mb-2;
+}
+.notification-item.unread {
+  @apply font-bold;
+}
+
+/* Task List */
+.todo-task-item {
+  @apply flex justify-between items-center p-4 border-b border-gray-200 hover:bg-gray-50;
+}
+.todo-task-details {
+  @apply flex flex-col;
+}
+.todo-task-due-date {
+  @apply text-gray-500 text-sm;
+}
+.todo-task-actions {
+  @apply flex items-center gap-2;
+}
+.todo-checkbox {
+  @apply w-5 h-5 cursor-pointer;
+}
+
+/* Additional Custom Styles */
 html,
 body,
 #__next {
-  height: 100vh;
-  min-height: 100vh;
+  @apply h-full min-h-full;
 }
 
 h1 {
-  font-size: 4rem;
-  font-weight: bold;
-  display: block;
+  @apply text-4xl font-bold block;
+}
+
+/* Alert Styles */
+.alert {
+  @apply p-4 rounded border bg-red-100 text-red-700 border-red-300;
+}
+
+.alert-info {
+  @apply p-4 rounded border bg-blue-100 text-blue-700 border-blue-300;
 }
