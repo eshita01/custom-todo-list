@@ -11,7 +11,7 @@ type Todos = {
   assigned_date: string | null
   assigned_to: { id: string; email: string } | null
   inserted_at: string | null
-  due_date: string | null
+  due_date: string | null // Ensure this is correctly typed
 }
 
 type Users = { id: string; email: string }
@@ -44,17 +44,19 @@ export default function TodoList({ session }: { session: Session }) {
 
       // Map todos to ensure correct types and default values
       setTodos(
-        todos.map((todo) => ({
-          ...todo,
-          task: todo.task || 'Untitled',
-          is_complete: todo.is_complete || false,
-          assigned_date: todo.assigned_date ? String(todo.assigned_date) : null,  // Ensure assigned_date is string | null
-          assigned_to: todo.assigned_to ? {
-            id: todo.assigned_to.id as string,
-            email: todo.assigned_to.email as string,
-          } : null,  // Ensure assigned_to is correctly typed
-        }))
-      )
+  todos.map((todo) => ({
+    ...todo,
+    task: todo.task || 'Untitled',
+    is_complete: todo.is_complete || false,
+    assigned_date: todo.assigned_date ? String(todo.assigned_date) : null, // Ensure assigned_date is string | null
+    assigned_to: todo.assigned_to ? {
+      id: todo.assigned_to.id as string,
+      email: todo.assigned_to.email as string,
+    } : null, // Ensure assigned_to is correctly typed
+    due_date: todo.due_date ? String(todo.due_date) : null, // Ensure due_date is string | null
+  }))
+)
+
     }
 
     const fetchUsers = async () => {
