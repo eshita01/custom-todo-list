@@ -4,7 +4,7 @@ import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
 import Notifications from '@/components/Notifications'
 import TaskFilters from '@/components/TaskFilters'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback} from 'react'
 
 export default function Home() {
   const session = useSession()
