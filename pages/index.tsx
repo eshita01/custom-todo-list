@@ -2,25 +2,36 @@ import Head from 'next/head'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
+import Notifications from '@/components/Notifications'
+import TaskFilters from '@/components/TaskFilters'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
+  const [users, setUsers] = useState([])
+  const [filter, setFilter] = useState('all') // Filter state: all, assigned_to_me, created_by_me, overdue, due_today
+
+  useEffect(() => {
+    if (session) {
+      fetchUsers()
+    }
+  }, [session])
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase.from('users').select('id, email')
+    const { data, error } = await supabase.from('auth.users').select('id, email')
     if (error) {
       console.error('Error fetching users:', error.message)
-      return []
+    } else {
+      setUsers(data)
     }
-    return data
   }
 
   return (
     <>
       <Head>
-        <title>Task Manager</title>
-        <meta name="description" content="Manage tasks efficiently" />
+        <title>Todo App with Supabase</title>
+        <meta name="description" content="Enhanced Todo List with Supabase" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -41,7 +52,12 @@ export default function Home() {
             className="w-full h-full flex flex-col justify-center items-center p-4"
             style={{ minWidth: 250, maxWidth: 600, margin: 'auto' }}
           >
-            <TodoList session={session} fetchUsers={fetchUsers} />
+            {/* Notifications Component */}
+            <Notifications session={session} />
+            {/* Task Filters */}
+            <TaskFilters onFilterChange={setFilter} />
+            {/* Todo List */}
+            <TodoList session={session} filter={filter} users={users} />
             <button
               className="btn-black w-full mt-12"
               onClick={async () => {
@@ -57,4 +73,3 @@ export default function Home() {
     </>
   )
 }
-
