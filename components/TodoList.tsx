@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 
 type Todos = {
   id: number
-  task: string
+  task: string | null // Allow task to be nullable
   user_id: string
-  is_complete: boolean
+  is_complete: boolean | null
   assigned_date: string | null
   assigned_to: { id: string; email: string } | null
 }
@@ -36,7 +36,8 @@ export default function TodoList({ session }: { session: Session }) {
       } else {
         const formattedTodos = todos.map((todo) => ({
           ...todo,
-          assigned_to: todo.assigned_to as { id: string; email: string } | null, // Ensure correct type
+          task: todo.task || 'Untitled Task', // Ensure task is not null
+          assigned_to: todo.assigned_to as { id: string; email: string } | null,
         }))
         setTodos(formattedTodos)
       }
@@ -53,7 +54,7 @@ export default function TodoList({ session }: { session: Session }) {
   }, [supabase])
 
   const addTodo = async (taskText: string) => {
-    let task = taskText.trim()
+    const task = taskText.trim() || 'Untitled Task' // Ensure a default value
     if (task.length && assignedTo && assignedDate) {
       const { data: todo, error } = await supabase
         .from('todos')
@@ -73,7 +74,8 @@ export default function TodoList({ session }: { session: Session }) {
           ...todos,
           {
             ...todo,
-            assigned_to: todo.assigned_to as { id: string; email: string } | null, // Ensure correct type
+            task: todo.task || 'Untitled Task',
+            assigned_to: todo.assigned_to as { id: string; email: string } | null,
           },
         ])
         setNewTaskText('')
