@@ -2,150 +2,84 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
-// Correct Todos type definition
-type Todos = {
-  id: number
-  task: string | null
-  user_id: string
-  is_complete: boolean | null
-  assigned_date: string | null
-  assigned_to: { id: string; email: string } | null
-  inserted_at: string | null
-  due_date: string | null // Ensure this is correctly typed
-}
-
+type Todos = Database['public']['Tables']['todos']['Row']
 type Users = { id: string; email: string }
 
-export default function TodoList({ session }: { session: Session }) {
+export default function TodoList({ session, filter, users }: { session: Session; filter: string; users: Users[] }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
-  const [assignedTo, setAssignedTo] = useState<string>('')
-  const [assignedDate, setAssignedDate] = useState<string>('')
+  const [assignedTo, setAssignedTo] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<Users[]>([])
 
   const user = session.user
 
   useEffect(() => {
     const fetchTodos = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select(`
-          id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
-          assigned_to (id, email)
-        `)
-        .order('id', { ascending: true })
+      let query = supabase.from('todos').select('*').order('id', { ascending: true })
 
-      if (error) {
-        console.error('Error fetching todos:', error)
-        return
+      if (filter === 'assigned_to_me') {
+        query = query.eq('assigned_to', user.id)
+      } else if (filter === 'created_by_me') {
+        query = query.eq('user_id', user.id)
+      } else if (filter === 'overdue') {
+        query = query.lt('due_date', new Date().toISOString().split('T')[0])
+      } else if (filter === 'due_today') {
+        query = query.eq('due_date', new Date().toISOString().split('T')[0])
       }
 
-      // Map todos to ensure correct types and default values
-      setTodos(
-  todos.map((todo) => {
-    let assignedTo = null;
-
-    // Check if assigned_to is an object with `id` and `email`
-    if (todo.assigned_to && !Array.isArray(todo.assigned_to)) {
-      assignedTo = {
-        id: todo.assigned_to.id as string,
-        email: todo.assigned_to.email as string,
-      };
-    }
-
-    return {
-      ...todo,
-      task: todo.task || 'Untitled',
-      is_complete: todo.is_complete || false,
-      assigned_date: todo.assigned_date ? String(todo.assigned_date) : null, // Ensure assigned_date is string | null
-      assigned_to: assignedTo, // Properly handle assigned_to as an object or null
-      due_date: todo.due_date ? String(todo.due_date) : null, // Ensure due_date is string | null
-    };
-  })
-);
-
-
-    }
-
-    const fetchUsers = async () => {
-      const { data: users, error } = await supabase.from('users').select('id, email')
-      if (error) console.error('Error fetching users:', error)
-      else setUsers(users || [])
+      const { data: todos, error } = await query
+      if (error) console.log('error', error)
+      else setTodos(todos)
     }
 
     fetchTodos()
-    fetchUsers()
-  }, [supabase])
+  }, [supabase, filter])
 
-  const addTodo = async (taskText: string) => {
-    const task = taskText.trim()
-    if (task.length && assignedTo && assignedDate) {
+  const addTodo = async () => {
+    let task = newTaskText.trim()
+    if (task.length) {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({
-          task,
-          user_id: user.id,
-          assigned_to: assignedTo,
-          assigned_date: assignedDate,
-        })
-        .select(`
-          id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
-          assigned_to (id, email)
-        `)
+        .insert({ task, user_id: user.id, assigned_to: assignedTo, due_date: dueDate })
+        .select()
         .single()
 
       if (error) {
         setErrorText(error.message)
-        return
+      } else {
+        setTodos([...todos, todo])
+        setNewTaskText('')
+        setAssignedTo('')
+        setDueDate('')
       }
-
-      // Add the new todo to the state with ensured types
-      setTodos((prev) => [
-        ...prev,
-        {
-          ...todo,
-          task: todo.task || 'Untitled',
-          is_complete: todo.is_complete || false,
-          assigned_date: todo.assigned_date ? String(todo.assigned_date) : null, // Ensure correct type for assigned_date
-          assigned_to: todo.assigned_to ? {
-            id: todo.assigned_to.id as string,
-            email: todo.assigned_to.email as string,
-          } : null, // Ensure correct type for assigned_to
-        },
-      ])
-      setNewTaskText('')
-      setAssignedTo('')
-      setAssignedDate('')
-    } else {
-      setErrorText('Please fill in all fields')
     }
   }
 
   const deleteTodo = async (id: number) => {
     try {
       await supabase.from('todos').delete().eq('id', id).throwOnError()
-      setTodos((prev) => prev.filter((todo) => todo.id !== id))
+      setTodos(todos.filter((x) => x.id !== id))
     } catch (error) {
-      console.error('Error deleting todo:', error)
+      console.log('error', error)
     }
   }
 
   return (
     <div className="w-full">
-      <h1 className="mb-12">Todo List.</h1>
+      <h1 className="mb-12">Todo List with Enhanced Features</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          addTodo(newTaskText)
+          addTodo()
         }}
-        className="flex gap-2 my-2"
+        className="flex flex-col gap-2 my-2"
       >
         <input
           className="rounded w-full p-2"
           type="text"
-          placeholder="make coffee"
+          placeholder="Task Title"
           value={newTaskText}
           onChange={(e) => {
             setErrorText('')
@@ -157,7 +91,9 @@ export default function TodoList({ session }: { session: Session }) {
           value={assignedTo}
           onChange={(e) => setAssignedTo(e.target.value)}
         >
-          <option value="">Assign To</option>
+          <option value="" disabled>
+            Assign to User
+          </option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
               {user.email}
@@ -167,11 +103,11 @@ export default function TodoList({ session }: { session: Session }) {
         <input
           className="rounded w-full p-2"
           type="date"
-          value={assignedDate}
-          onChange={(e) => setAssignedDate(e.target.value)}
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
         />
         <button className="btn-black" type="submit">
-          Add
+          Add Task
         </button>
       </form>
       {!!errorText && <Alert text={errorText} />}
@@ -188,7 +124,7 @@ export default function TodoList({ session }: { session: Session }) {
 
 const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
   const supabase = useSupabaseClient<Database>()
-  const [isCompleted, setIsCompleted] = useState(todo.is_complete || false)
+  const [isCompleted, setIsCompleted] = useState(todo.is_complete)
 
   const toggle = async () => {
     try {
@@ -196,28 +132,29 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         .from('todos')
         .update({ is_complete: !isCompleted })
         .eq('id', todo.id)
+        .throwOnError()
         .select()
         .single()
 
-      if (data) setIsCompleted(data.is_complete || false)
+      if (data) setIsCompleted(data.is_complete)
     } catch (error) {
-      console.error('Error toggling todo:', error)
+      console.log('error', error)
     }
   }
 
   return (
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
       <div className="flex items-center px-4 py-4 sm:px-6">
-        <div className="min-w-0 flex-1 flex items-center">
-          <div className="text-sm leading-5 font-medium truncate">{todo.task || 'Untitled'}</div>
-          <div className="text-sm text-gray-600 ml-2">
-            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
-          </div>
+        <div className="min-w-0 flex-1 flex flex-col">
+          <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
+          {todo.due_date && (
+            <div className="text-xs text-gray-500">Due: {new Date(todo.due_date).toLocaleDateString()}</div>
+          )}
         </div>
         <div>
           <input
             className="cursor-pointer"
-            onChange={toggle}
+            onChange={() => toggle()}
             type="checkbox"
             checked={isCompleted}
           />
@@ -233,7 +170,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="gray">
             <path
               fillRule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414 1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
               clipRule="evenodd"
             />
           </svg>
