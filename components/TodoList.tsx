@@ -63,47 +63,39 @@ export default function TodoList({ session }: { session: Session }) {
     fetchUsers()
   }, [supabase])
 
-  const addTodo = async (taskText: string) => {
-    const task = taskText.trim()
-    if (task.length && assignedTo && assignedDate) {
-      const { data: todo, error } = await supabase
-        .from('todos')
-        .insert({
-          task,
-          user_id: user.id,
-          assigned_to: assignedTo,
-          due_date: assignedDate,
-        })
-        .select(`
-          id,
-          user_id,
-          task,
-          is_complete,
-          inserted_at,
-          due_date,
-          assigned_to (id, email)
-        `)
-        .single()
+ const addTodo = async (taskText: string) => {
+  const task = taskText.trim()
+  if (task.length && assignedTo && assignedDate) {
+    const { data: todo, error } = await supabase
+      .from('todos')
+      .insert({
+        task,
+        user_id: user.id,
+        assigned_to: assignedTo,
+        assigned_date: assignedDate,
+      })
+      .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
+      .single()
 
-      if (error) {
-        setErrorText(error.message)
-      } else {
-        setTodos((prev) => [
-          ...prev,
-          {
-            ...todo,
-            is_complete: todo.is_complete || false,
-            assigned_to: todo.assigned_to as { id: string; email: string } | null,
-          },
-        ])
-        setNewTaskText('')
-        setAssignedTo('')
-        setAssignedDate('')
-      }
+    if (error) {
+      setErrorText(error.message)
     } else {
-      setErrorText('Please fill in all fields')
+      setTodos((prev) => [
+        ...prev,
+        {
+          ...todo,
+          assigned_to: todo.assigned_to || null,
+          task: todo.task || '', // Default empty string if task is null
+        },
+      ])
+      setNewTaskText('')
+      setAssignedTo('')
+      setAssignedDate('')
     }
+  } else {
+    setErrorText('Please fill in all fields')
   }
+}
 
   const deleteTodo = async (id: number) => {
     try {
