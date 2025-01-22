@@ -16,30 +16,35 @@ export default function TodoList({ session, filter, users }: { session: Session;
   const user = session.user
 
   useEffect(() => {
-  const fetchTodos = async () => {
-    let query = supabase.from('todos').select('*').order('id', { ascending: true })
+    const fetchTodos = async () => {
+      let query = supabase
+        .from('todos')
+        .select('id, task, user_id, is_complete, due_date, assigned_to') // Include due_date and assigned_to
+        .order('id', { ascending: true })
 
-    if (filter === 'assigned_to_me') {
-      query = query.eq('assigned_to', user.id)
-    } else if (filter === 'created_by_me') {
-      query = query.eq('user_id', user.id)
-    } else if (filter === 'overdue') {
-      query = query.lt('due_date', new Date().toISOString().split('T')[0])
-    } else if (filter === 'due_today') {
-      query = query.eq('due_date', new Date().toISOString().split('T')[0])
+      if (filter === 'assigned_to_me') {
+        query = query.eq('assigned_to', user.id)
+      } else if (filter === 'created_by_me') {
+        query = query.eq('user_id', user.id)
+      } else if (filter === 'overdue') {
+        query = query.lt('due_date', new Date().toISOString().split('T')[0])
+      } else if (filter === 'due_today') {
+        query = query.eq('due_date', new Date().toISOString().split('T')[0])
+      }
+
+      const { data, error } = await query
+      if (error) {
+        console.error('Error fetching todos:', error.message)
+      } else {
+        setTodos(data || [])
+      }
     }
 
-    const { data, error } = await query
-    if (error) console.log('error', error)
-    else setTodos(data)
-  }
-
-  fetchTodos()
-}, [supabase, filter, user.id]) // Add `supabase`, `filter`, and `user.id` as dependencies
-
+    fetchTodos()
+  }, [supabase, filter, user.id])
 
   const addTodo = async () => {
-    let task = newTaskText.trim()
+    const task = newTaskText.trim()
     if (task.length) {
       const { data: todo, error } = await supabase
         .from('todos')
@@ -63,7 +68,7 @@ export default function TodoList({ session, filter, users }: { session: Session;
       await supabase.from('todos').delete().eq('id', id).throwOnError()
       setTodos(todos.filter((x) => x.id !== id))
     } catch (error) {
-      console.log('error', error)
+      console.error('Error deleting todo:', error)
     }
   }
 
@@ -139,7 +144,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
 
       if (data) setIsCompleted(data.is_complete)
     } catch (error) {
-      console.log('error', error)
+      console.error('Error toggling todo:', error)
     }
   }
 
@@ -171,7 +176,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="gray">
             <path
               fillRule="evenodd"
-              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414 1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
               clipRule="evenodd"
             />
           </svg>
