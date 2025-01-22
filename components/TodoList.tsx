@@ -19,7 +19,7 @@ export default function TodoList({ session, filter, users }: { session: Session;
     const fetchTodos = async () => {
       let query = supabase
         .from('todos')
-        .select('id, task, user_id, is_complete, due_date, assigned_to') // Include due_date and assigned_to
+        .select('id, inserted_at, task, user_id, is_complete, due_date, assigned_to') // Include due_date and assigned_to
         .order('id', { ascending: true })
 
       if (filter === 'assigned_to_me') {
