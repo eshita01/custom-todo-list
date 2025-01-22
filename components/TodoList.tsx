@@ -2,8 +2,16 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
-type Todos = Database['public']['Tables']['todos']['Row']
-type Users = { id: string; email: string }  // Define the User type explicitly
+type Todos = {
+  id: number
+  task: string
+  user_id: string
+  is_complete: boolean
+  assigned_date: string | null
+  assigned_to: { id: string; email: string } | null // Reference to auth.users
+}
+
+type Users = { id: string; email: string } // Define the User type explicitly
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
@@ -20,20 +28,25 @@ export default function TodoList({ session }: { session: Session }) {
     const fetchTodos = async () => {
       const { data: todos, error } = await supabase
         .from('todos')
-        .select('*')
+        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
         .order('id', { ascending: true })
 
-      if (error) console.log('error', error)
-      else setTodos(todos)
+      if (error) {
+        console.log('error', error)
+      } else {
+        // Format todos with assigned user email
+        const formattedTodos = todos.map((todo) => ({
+          ...todo,
+          assigned_to_email: todo.assigned_to?.email || 'N/A',
+        }))
+        setTodos(formattedTodos as Todos[])
+      }
     }
 
     const fetchUsers = async () => {
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-
+      const { data: users, error } = await supabase.from('users').select('*')
       if (error) console.log('error', error)
-      else setUsers(users as Users[])  // Explicitly cast the data to Users[]
+      else setUsers(users as Users[])
     }
 
     fetchTodos()
@@ -45,13 +58,13 @@ export default function TodoList({ session }: { session: Session }) {
     if (task.length && assignedTo && assignedDate) {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ 
-          task, 
-          user_id: user.id, 
-          assigned_to: assignedTo, 
-          assigned_date: assignedDate 
+        .insert({
+          task,
+          user_id: user.id,
+          assigned_to: assignedTo,
+          assigned_date: assignedDate,
         })
-        .select()
+        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
         .single()
 
       if (error) {
@@ -156,7 +169,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
           <div className="text-sm text-gray-600 ml-2">
-            Assigned to: {todo.assigned_to || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
+            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
           </div>
         </div>
         <div>
