@@ -130,7 +130,7 @@ export default function TodoList({ session, filter, users }: { session: Session;
 
 const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
   const supabase = useSupabaseClient<Database>()
-  const [isCompleted, setIsCompleted] = useState(todo.is_complete)
+  const [isCompleted, setIsCompleted] = useState<boolean>(todo.is_complete || false) // Default to false
 
   const toggle = async () => {
     try {
@@ -162,7 +162,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
             className="cursor-pointer"
             onChange={() => toggle()}
             type="checkbox"
-            checked={isCompleted}
+            checked={isCompleted || false} // Convert null to false
           />
         </div>
         <button
