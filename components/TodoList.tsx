@@ -16,26 +16,27 @@ export default function TodoList({ session, filter, users }: { session: Session;
   const user = session.user
 
   useEffect(() => {
-    const fetchTodos = async () => {
-      let query = supabase.from('todos').select('*').order('id', { ascending: true })
+  const fetchTodos = async () => {
+    let query = supabase.from('todos').select('*').order('id', { ascending: true })
 
-      if (filter === 'assigned_to_me') {
-        query = query.eq('assigned_to', user.id)
-      } else if (filter === 'created_by_me') {
-        query = query.eq('user_id', user.id)
-      } else if (filter === 'overdue') {
-        query = query.lt('due_date', new Date().toISOString().split('T')[0])
-      } else if (filter === 'due_today') {
-        query = query.eq('due_date', new Date().toISOString().split('T')[0])
-      }
-
-      const { data: todos, error } = await query
-      if (error) console.log('error', error)
-      else setTodos(todos)
+    if (filter === 'assigned_to_me') {
+      query = query.eq('assigned_to', user.id)
+    } else if (filter === 'created_by_me') {
+      query = query.eq('user_id', user.id)
+    } else if (filter === 'overdue') {
+      query = query.lt('due_date', new Date().toISOString().split('T')[0])
+    } else if (filter === 'due_today') {
+      query = query.eq('due_date', new Date().toISOString().split('T')[0])
     }
 
-    fetchTodos()
-  }, [supabase, filter])
+    const { data, error } = await query
+    if (error) console.log('error', error)
+    else setTodos(data)
+  }
+
+  fetchTodos()
+}, [supabase, filter, user.id]) // Add `supabase`, `filter`, and `user.id` as dependencies
+
 
   const addTodo = async () => {
     let task = newTaskText.trim()
