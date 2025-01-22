@@ -9,7 +9,7 @@ type Todos = {
   user_id: string
   is_complete: boolean | null
   assigned_date: string | null
-  assigned_to: { id: string; email: string } | null  // Corrected type for assigned_to
+  assigned_to: { id: string; email: string } | { id: string; email: string }[] | null // Allow array or object
   inserted_at: string | null
   due_date: string | null
 }
@@ -49,6 +49,8 @@ export default function TodoList({ session }: { session: Session }) {
           task: todo.task || 'Untitled',
           is_complete: todo.is_complete || false,
           assigned_date: todo.assigned_date as string | null, // Ensure assigned_date is string | null
+          // Ensure assigned_to is an object (or null), not an array
+          assigned_to: Array.isArray(todo.assigned_to) ? todo.assigned_to[0] : todo.assigned_to,
         }))
       )
     }
@@ -93,6 +95,7 @@ export default function TodoList({ session }: { session: Session }) {
           task: todo.task || 'Untitled',
           is_complete: todo.is_complete || false,
           assigned_date: todo.assigned_date as string | null, // Ensure type compatibility
+          assigned_to: Array.isArray(todo.assigned_to) ? todo.assigned_to[0] : todo.assigned_to, // Ensure correct type
         },
       ])
       setNewTaskText('')
@@ -222,7 +225,6 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
     </li>
   )
 }
-
 const Alert = ({ text }: { text: string }) => (
   <div className="rounded-md bg-red-100 p-4 my-3">
     <div className="text-sm leading-5 text-red-700">{text}</div>
