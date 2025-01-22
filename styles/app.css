@@ -948,3 +948,139 @@ h1 {
     padding-right: 1.5rem;
   }
 }
+
+/* Existing styles remain untouched */
+
+/* Task Filters */
+.filter-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  background-color: #f8f9fa;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.filter-button:hover {
+  background-color: #e2e6ea;
+}
+
+.filter-button.active {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+/* Notifications */
+.notification-container {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #ffd700;
+  background-color: #fff8dc;
+  border-radius: 0.25rem;
+}
+
+.notification-item {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ffc107;
+  border-radius: 0.25rem;
+  background-color: #fff3cd;
+}
+
+.notification-item.unread {
+  font-weight: bold;
+}
+
+/* Additional Enhancements */
+.todo-task-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.2s ease;
+}
+
+.todo-task-item:hover {
+  background-color: #f8f9fa;
+}
+
+.todo-task-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-task-due-date {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.todo-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.todo-checkbox {
+  cursor: pointer;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Button Enhancements */
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: 1px solid #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #bd2130;
+  border-color: #bd2130;
+}
+
+/* Alert Styles */
+.alert {
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 0.25rem;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
