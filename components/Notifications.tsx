@@ -22,15 +22,16 @@ export default function Notifications({ userId }: { userId: string }) {
 
     fetchNotifications()
 
-    const subscription = supabase
-      .from(`notifications:user_id=eq.${userId}`)
-      .on('INSERT', (payload) => {
-        setNotifications((prev) => [payload.new, ...prev])
+    // Subscribe to real-time notifications
+    const channel = supabase
+      .channel(`notifications:user_id=eq.${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+        setNotifications((prev) => [payload.new as Notification, ...prev])
       })
       .subscribe()
 
     return () => {
-      supabase.removeSubscription(subscription)
+      supabase.removeChannel(channel)
     }
   }, [supabase, userId])
 
