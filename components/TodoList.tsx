@@ -4,113 +4,104 @@ import { useEffect, useState } from 'react'
 
 type Todos = {
   id: number
-  user_id: string // UUID from auth.users
-  task: string // Task description
-  is_complete: boolean | null // Completion status
-  inserted_at: string // Timestamp
-  assigned_to: { id: string; email: string } | null // Reference to auth.users
-  due_date: string | null // Due date for the task
+  task: string | null
+  user_id: string
+  is_complete: boolean | null
+  assigned_date: string | null
+  assigned_to: { id: string; email: string } | null
+  inserted_at: string | null
+  due_date: string | null
 }
 
-type Users = { id: string; email: string } // User type for assignment
+type Users = { id: string; email: string }
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
-  const [assignedTo, setAssignedTo] = useState<string>('') // User assigned to the task
-  const [assignedDate, setAssignedDate] = useState<string>('') // Due date for the task
+  const [assignedTo, setAssignedTo] = useState<string>('')
+  const [assignedDate, setAssignedDate] = useState<string>('')
   const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<Users[]>([]) // List of users for assignment
+  const [users, setUsers] = useState<Users[]>([])
 
   const user = session.user
 
   useEffect(() => {
     const fetchTodos = async () => {
-  const { data: todos, error } = await supabase
-    .from('todos')
-    .select(`
-      id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
-      assigned_to (id, email)
-    `)
-    .order('id', { ascending: true })
+      const { data: todos, error } = await supabase
+        .from('todos')
+        .select(`
+          id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
+          assigned_to (id, email)
+        `)
+        .order('id', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching todos:', error)
-    return
-  }
+      if (error) {
+        console.error('Error fetching todos:', error)
+        return
+      }
 
-  // Ensure default values for nullable fields
-  setTodos(
-    todos.map((todo) => ({
-      ...todo,
-      task: todo.task || 'Untitled',
-      is_complete: todo.is_complete || false,
-    }))
-  )
-}
-
-      const formattedTodos = todos.map((todo) => ({
-        ...todo,
-        is_complete: todo.is_complete || false,
-        assigned_to: todo.assigned_to as { id: string; email: string } | null,
-      }))
-      setTodos(formattedTodos as Todos[])
+      setTodos(
+        todos.map((todo) => ({
+          ...todo,
+          task: todo.task || 'Untitled',
+          is_complete: todo.is_complete || false,
+        }))
+      )
     }
 
     const fetchUsers = async () => {
       const { data: users, error } = await supabase.from('users').select('id, email')
       if (error) console.error('Error fetching users:', error)
-      else setUsers(users as Users[])
+      else setUsers(users || [])
     }
 
     fetchTodos()
     fetchUsers()
   }, [supabase])
 
-const addTodo = async (taskText: string) => {
-  const task = taskText.trim()
-  if (task.length && assignedTo && assignedDate) {
-    const { data: todo, error } = await supabase
-      .from('todos')
-      .insert({
-        task,
-        user_id: user.id,
-        assigned_to: assignedTo,
-        assigned_date: assignedDate,
-      })
-      .select(`
-        id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
-        assigned_to (id, email)
-      `)
-      .single()
+  const addTodo = async (taskText: string) => {
+    const task = taskText.trim()
+    if (task.length && assignedTo && assignedDate) {
+      const { data: todo, error } = await supabase
+        .from('todos')
+        .insert({
+          task,
+          user_id: user.id,
+          assigned_to: assignedTo,
+          assigned_date: assignedDate,
+        })
+        .select(`
+          id, task, user_id, is_complete, assigned_date, inserted_at, due_date,
+          assigned_to (id, email)
+        `)
+        .single()
 
-    if (error) {
-      setErrorText(error.message)
-      return
+      if (error) {
+        setErrorText(error.message)
+        return
+      }
+
+      setTodos((prev) => [
+        ...prev,
+        {
+          ...todo,
+          task: todo.task || 'Untitled',
+          is_complete: todo.is_complete || false,
+        },
+      ])
+      setNewTaskText('')
+      setAssignedTo('')
+      setAssignedDate('')
+    } else {
+      setErrorText('Please fill in all fields')
     }
-
-    // Add the new todo with default values for nullable fields
-    setTodos((prev) => [
-      ...prev,
-      {
-        ...todo,
-        task: todo.task || 'Untitled',
-        is_complete: todo.is_complete || false,
-      },
-    ])
-    setNewTaskText('')
-    setAssignedTo('')
-    setAssignedDate('')
-  } else {
-    setErrorText('Please fill in all fields')
   }
-}
 
   const deleteTodo = async (id: number) => {
     try {
       await supabase.from('todos').delete().eq('id', id).throwOnError()
-      setTodos(todos.filter((x) => x.id != id))
+      setTodos((prev) => prev.filter((todo) => todo.id !== id))
     } catch (error) {
       console.error('Error deleting todo:', error)
     }
@@ -118,7 +109,7 @@ const addTodo = async (taskText: string) => {
 
   return (
     <div className="w-full">
-      <h1 className="mb-12">Todo List</h1>
+      <h1 className="mb-12">Todo List.</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -129,7 +120,7 @@ const addTodo = async (taskText: string) => {
         <input
           className="rounded w-full p-2"
           type="text"
-          placeholder="Enter a task"
+          placeholder="make coffee"
           value={newTaskText}
           onChange={(e) => {
             setErrorText('')
