@@ -4,23 +4,24 @@ import { useEffect, useState } from 'react'
 
 type Todos = {
   id: number
-  task: string | null // Allow task to be nullable
-  user_id: string
-  is_complete: boolean | null
-  assigned_date: string | null
-  assigned_to: { id: string; email: string } | null
+  user_id: string // UUID from auth.users
+  task: string // Task description
+  is_complete: boolean | null // Completion status
+  inserted_at: string // Timestamp
+  assigned_to: { id: string; email: string } | null // Reference to auth.users
+  due_date: string | null // Due date for the task
 }
 
-type Users = { id: string; email: string }
+type Users = { id: string; email: string } // User type for assignment
 
 export default function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
-  const [assignedTo, setAssignedTo] = useState<string>('')
-  const [assignedDate, setAssignedDate] = useState<string>('')
+  const [assignedTo, setAssignedTo] = useState<string>('') // User assigned to the task
+  const [assignedDate, setAssignedDate] = useState<string>('') // Due date for the task
   const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<Users[]>([])
+  const [users, setUsers] = useState<Users[]>([]) // List of users for assignment
 
   const user = session.user
 
@@ -28,24 +29,33 @@ export default function TodoList({ session }: { session: Session }) {
     const fetchTodos = async () => {
       const { data: todos, error } = await supabase
         .from('todos')
-        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
+        .select(`
+          id,
+          user_id,
+          task,
+          is_complete,
+          inserted_at,
+          due_date,
+          assigned_to (id, email)
+        `)
         .order('id', { ascending: true })
 
       if (error) {
-        console.log('error', error)
-      } else {
-        const formattedTodos = todos.map((todo) => ({
-          ...todo,
-          task: todo.task || 'Untitled Task', // Ensure task is not null
-          assigned_to: todo.assigned_to as { id: string; email: string } | null,
-        }))
-        setTodos(formattedTodos)
+        console.error('Error fetching todos:', error)
+        return
       }
+
+      const formattedTodos = todos.map((todo) => ({
+        ...todo,
+        is_complete: todo.is_complete || false,
+        assigned_to: todo.assigned_to as { id: string; email: string } | null,
+      }))
+      setTodos(formattedTodos as Todos[])
     }
 
     const fetchUsers = async () => {
       const { data: users, error } = await supabase.from('users').select('id, email')
-      if (error) console.log('error', error)
+      if (error) console.error('Error fetching users:', error)
       else setUsers(users as Users[])
     }
 
@@ -54,7 +64,7 @@ export default function TodoList({ session }: { session: Session }) {
   }, [supabase])
 
   const addTodo = async (taskText: string) => {
-    const task = taskText.trim() || 'Untitled Task' // Ensure a default value
+    const task = taskText.trim()
     if (task.length && assignedTo && assignedDate) {
       const { data: todo, error } = await supabase
         .from('todos')
@@ -62,19 +72,27 @@ export default function TodoList({ session }: { session: Session }) {
           task,
           user_id: user.id,
           assigned_to: assignedTo,
-          assigned_date: assignedDate,
+          due_date: assignedDate,
         })
-        .select('id, task, user_id, is_complete, assigned_date, assigned_to (id, email)')
+        .select(`
+          id,
+          user_id,
+          task,
+          is_complete,
+          inserted_at,
+          due_date,
+          assigned_to (id, email)
+        `)
         .single()
 
       if (error) {
         setErrorText(error.message)
       } else {
-        setTodos([
-          ...todos,
+        setTodos((prev) => [
+          ...prev,
           {
             ...todo,
-            task: todo.task || 'Untitled Task',
+            is_complete: todo.is_complete || false,
             assigned_to: todo.assigned_to as { id: string; email: string } | null,
           },
         ])
@@ -92,13 +110,13 @@ export default function TodoList({ session }: { session: Session }) {
       await supabase.from('todos').delete().eq('id', id).throwOnError()
       setTodos(todos.filter((x) => x.id != id))
     } catch (error) {
-      console.log('error', error)
+      console.error('Error deleting todo:', error)
     }
   }
 
   return (
     <div className="w-full">
-      <h1 className="mb-12">Todo List.</h1>
+      <h1 className="mb-12">Todo List</h1>
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -109,7 +127,7 @@ export default function TodoList({ session }: { session: Session }) {
         <input
           className="rounded w-full p-2"
           type="text"
-          placeholder="make coffee"
+          placeholder="Enter a task"
           value={newTaskText}
           onChange={(e) => {
             setErrorText('')
@@ -160,13 +178,12 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         .from('todos')
         .update({ is_complete: !isCompleted })
         .eq('id', todo.id)
-        .throwOnError()
         .select()
         .single()
 
       if (data) setIsCompleted(data.is_complete)
     } catch (error) {
-      console.log('error', error)
+      console.error('Error toggling todo:', error)
     }
   }
 
@@ -176,15 +193,15 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
           <div className="text-sm text-gray-600 ml-2">
-            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.assigned_date || 'N/A'}
+            Assigned to: {todo.assigned_to?.email || 'N/A'} | Due Date: {todo.due_date || 'N/A'}
           </div>
         </div>
         <div>
           <input
             className="cursor-pointer"
-            onChange={(e) => toggle()}
+            onChange={toggle}
             type="checkbox"
-            checked={isCompleted ? true : false}
+            checked={isCompleted || false}
           />
         </div>
         <button
