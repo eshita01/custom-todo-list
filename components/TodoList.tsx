@@ -2,6 +2,7 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
+// Correct Todos type definition
 type Todos = {
   id: number
   task: string | null
@@ -47,11 +48,11 @@ export default function TodoList({ session }: { session: Session }) {
           ...todo,
           task: todo.task || 'Untitled',
           is_complete: todo.is_complete || false,
-          assigned_date: todo.assigned_date || null, // Ensure assigned_date is string | null
+          assigned_date: todo.assigned_date ? String(todo.assigned_date) : null,  // Ensure assigned_date is string | null
           assigned_to: todo.assigned_to ? {
             id: todo.assigned_to.id as string,
-            email: todo.assigned_to.email as string
-          } : null, // Ensure correct type for assigned_to
+            email: todo.assigned_to.email as string,
+          } : null,  // Ensure assigned_to is correctly typed
         }))
       )
     }
@@ -95,11 +96,11 @@ export default function TodoList({ session }: { session: Session }) {
           ...todo,
           task: todo.task || 'Untitled',
           is_complete: todo.is_complete || false,
-          assigned_date: todo.assigned_date || null,
+          assigned_date: todo.assigned_date ? String(todo.assigned_date) : null, // Ensure correct type for assigned_date
           assigned_to: todo.assigned_to ? {
             id: todo.assigned_to.id as string,
-            email: todo.assigned_to.email as string
-          } : null, // Handle assigned_to correctly
+            email: todo.assigned_to.email as string,
+          } : null, // Ensure correct type for assigned_to
         },
       ])
       setNewTaskText('')
