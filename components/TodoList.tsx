@@ -130,23 +130,24 @@ export default function TodoList({ session, filter, users }: { session: Session;
 
 const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
   const supabase = useSupabaseClient<Database>()
-  const [isCompleted, setIsCompleted] = useState<boolean>(todo.is_complete || false) // Default to false
+  const [isCompleted, setIsCompleted] = useState<boolean>(todo.is_complete ?? false) // Default to false
 
   const toggle = async () => {
-    try {
-      const { data } = await supabase
-        .from('todos')
-        .update({ is_complete: !isCompleted })
-        .eq('id', todo.id)
-        .throwOnError()
-        .select()
-        .single()
+  try {
+    const { data } = await supabase
+      .from('todos')
+      .update({ is_complete: !isCompleted })
+      .eq('id', todo.id)
+      .throwOnError()
+      .select()
+      .single()
 
-      if (data) setIsCompleted(data.is_complete)
-    } catch (error) {
-      console.error('Error toggling todo:', error)
-    }
+    if (data) setIsCompleted(data.is_complete ?? false) // Default to false if null
+  } catch (error) {
+    console.error('Error toggling todo:', error)
   }
+}
+
 
   return (
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
