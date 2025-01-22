@@ -16,6 +16,8 @@ export interface Database {
           is_complete: boolean | null
           task: string | null
           user_id: string
+          due_date: string | null // New column for task due date
+          assigned_to: string | null // New column for task assignment
         }
         Insert: {
           id?: number
@@ -23,6 +25,8 @@ export interface Database {
           is_complete?: boolean | null
           task?: string | null
           user_id: string
+          due_date?: string | null // New column for task due date
+          assigned_to?: string | null // New column for task assignment
         }
         Update: {
           id?: number
@@ -30,6 +34,8 @@ export interface Database {
           is_complete?: boolean | null
           task?: string | null
           user_id?: string
+          due_date?: string | null // New column for task due date
+          assigned_to?: string | null // New column for task assignment
         }
       }
     }
