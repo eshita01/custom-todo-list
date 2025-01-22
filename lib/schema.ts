@@ -1,41 +1,33 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json }
-  | Json[]
-
 export interface Database {
   public: {
     Tables: {
       todos: {
         Row: {
           id: number
-          inserted_at: string
+          inserted_at: string | null // Make inserted_at optional
           is_complete: boolean | null
           task: string | null
           user_id: string
-          due_date: string | null // New column for task due date
-          assigned_to: string | null // New column for task assignment
+          due_date: string | null
+          assigned_to: string | null
         }
         Insert: {
           id?: number
-          inserted_at?: string
+          inserted_at?: string | null // Make inserted_at optional
           is_complete?: boolean | null
           task?: string | null
           user_id: string
-          due_date?: string | null // New column for task due date
-          assigned_to?: string | null // New column for task assignment
+          due_date?: string | null
+          assigned_to?: string | null
         }
         Update: {
           id?: number
-          inserted_at?: string
+          inserted_at?: string | null // Make inserted_at optional
           is_complete?: boolean | null
           task?: string | null
           user_id?: string
-          due_date?: string | null // New column for task due date
-          assigned_to?: string | null // New column for task assignment
+          due_date?: string | null
+          assigned_to?: string | null
         }
       }
     }
