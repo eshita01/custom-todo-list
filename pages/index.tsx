@@ -4,28 +4,32 @@ import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
 import Notifications from '@/components/Notifications'
 import TaskFilters from '@/components/TaskFilters'
-import { useEffect, useState, useCallback} from 'react'
+import { useEffect, useState, useCallback } from 'react'
+
+// Define the type for users
+type User = { id: string; email: string }
 
 export default function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<User[]>([]) // Explicit type for users
   const [filter, setFilter] = useState('all') // Filter state: all, assigned_to_me, created_by_me, overdue, due_today
+
+  // Memoize fetchUsers to prevent recreation on every render
+  const fetchUsers = useCallback(async () => {
+    const { data, error } = await supabase.from('auth.users').select('id, email')
+    if (error) {
+      console.error('Error fetching users:', error.message)
+    } else {
+      setUsers(data || []) // Ensure data is never null
+    }
+  }, [supabase])
 
   useEffect(() => {
     if (session) {
       fetchUsers()
     }
-  }, [session])
-
-  const fetchUsers = async () => {
-    const { data, error } = await supabase.from('auth.users').select('id, email')
-    if (error) {
-      console.error('Error fetching users:', error.message)
-    } else {
-      setUsers(data)
-    }
-  }
+  }, [session, fetchUsers])
 
   return (
     <>
@@ -53,9 +57,9 @@ export default function Home() {
             style={{ minWidth: 250, maxWidth: 600, margin: 'auto' }}
           >
             {/* Notifications Component */}
-            <Notifications session={session} />
+            <Notifications userId={session.user.id} />
             {/* Task Filters */}
-            <TaskFilters onFilterChange={setFilter} />
+            <TaskFilters filter={filter} setFilter={setFilter} />
             {/* Todo List */}
             <TodoList session={session} filter={filter} users={users} />
             <button
