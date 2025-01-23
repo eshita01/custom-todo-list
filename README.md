@@ -137,11 +137,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 Create a new branch, make changes (e.g., update a feature or configuration), and push it to Git.
 Open a pull request to trigger Vercel + Supabase integration.
 Upon successful deployment, the preview environment reflects the changes for testing.
-##Supabase Details and Authorization
+## Supabase Details and Authorization
 Postgres Row-Level Security (RLS): Used for fine-grained control over access to tasks and notifications.
 ## Authorization:
 For unauthenticated access, the anon key is used.
 Once logged in, user access is controlled by their JWT.
-##Authors
+## Authors
 This project is based on the Supabase Todo Example.
 Supabase is open-source, and contributions are welcome.
