@@ -108,8 +108,8 @@ EXECUTE FUNCTION notify_task_assignment();
 ```
 Replace <your-supabase-url> and <your-anon-key> with your Supabase project details.
 
-##Run the Project Locally
-#Install dependencies:
+## Run the Project Locally
+### Install dependencies:
 ```bash
 npm install
 ```
@@ -117,17 +117,17 @@ Start the development server:
 ```bash
 npm run dev
 ```
-##Notifications Feature
+## Notifications Feature
 Task Assignment Notifications: A notification is automatically created whenever a task is assigned to a user.
 User Notifications:
 Users can:
 View notifications.
 Mark notifications as read.
 Security: Notifications are managed using row-level security (RLS), ensuring only the intended recipient can access or update their notifications.
-##Vercel Preview with Branching
+## Vercel Preview with Branching
 Supabase integrates seamlessly with Vercel to provide preview branches with dedicated Supabase projects. This allows you to safely test database migrations or service configurations.
 
-###Steps:
+### Steps:
 Ensure the Vercel project is linked to a Git repository.
 Configure the Preview Environment Variables in Vercel:
 ```
@@ -139,7 +139,7 @@ Open a pull request to trigger Vercel + Supabase integration.
 Upon successful deployment, the preview environment reflects the changes for testing.
 ##Supabase Details and Authorization
 Postgres Row-Level Security (RLS): Used for fine-grained control over access to tasks and notifications.
-A##uthorization:
+## Authorization:
 For unauthenticated access, the anon key is used.
 Once logged in, user access is controlled by their JWT.
 ##Authors
